@@ -1,0 +1,17 @@
+# Config for the ILIAD course notebook generator (ported from ARENA via iliad-intensive-D.2).
+# One notebook: Louis Jaburi's compact-proofs tutorial for E.3 Worst-Case Interpretability. main.py reads:
+#   conversion_map[id] -> (streamlit_page, exercise_dir)
+#   chapter_names[chapter], chapter_names_long[chapter]   (chapter = the part of the id before the dot)
+# Generated artifacts land under <repo>/build/exercises/<exercise_dir>/ ; CI bundles
+# them with gen/support/<exercise_dir>/ and force-pushes to the `build` branch for Colab.
+
+conversion_map:
+  "E.3":
+    streamlit_page: "01_[E.3]_Compact_Proofs"
+    exercise_dir: "compact_proofs"
+
+chapter_names:
+  "E": "build"
+
+chapter_names_long:
+  "E": "ILIAD Intensive - E.3 Worst-Case Interpretability"
