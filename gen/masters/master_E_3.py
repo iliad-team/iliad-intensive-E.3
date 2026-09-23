@@ -89,6 +89,9 @@ class Parameters:
 params = Parameters()
 performance = []
 
+# Run everything on the GPU if there is one (Runtime > Change runtime type > GPU on Colab)
+device = t.device("cuda" if t.cuda.is_available() else "cpu")
+
 # ! CELL TYPE: code
 # ! FILTERS: []
 # ! TAGS: []
@@ -110,8 +113,12 @@ def set_seed(seed: int = 57) -> None:
 
 def measure_time(func):
     def wrapper(*args, **kwargs):
+        if device.type == "cuda":
+            t.cuda.synchronize()
         start_time = time.time()
         result = func(*args, **kwargs)
+        if device.type == "cuda":
+            t.cuda.synchronize()
         end_time = time.time()
         elapsed_time = end_time - start_time
         print(f"Function '{func.__name__}' executed in: {elapsed_time:.6f} seconds")
@@ -141,7 +148,7 @@ class TrainingDataMax(Dataset):
 # ! FILTERS: []
 # ! TAGS: []
 
-train_data = TrainingDataMax(params=Parameters)
+train_data = TrainingDataMax(params=params)
 
 # ! CELL TYPE: code
 # ! FILTERS: []
@@ -158,7 +165,7 @@ def training_step(
 
     criterion = t.nn.CrossEntropyLoss()
 
-    inputs, labels = t.stack(batch[:-1], dim=1), batch[-1]
+    inputs, labels = t.stack(batch[:-1], dim=1).to(device), batch[-1].to(device)
 
     inputs_one_hot = F.one_hot(inputs, params.d_vocab).float()
 
@@ -181,7 +188,7 @@ def train(model, params):
     loss_history = []
 
     subset_cardinality = int(
-        len(TrainingDataMax(params=Parameters)) * (params.subset_percentage / 100)
+        len(TrainingDataMax(params=params)) * (params.subset_percentage / 100)
     )
     remaining_cardinality = len(TrainingDataMax(params=params)) - subset_cardinality
 
@@ -273,7 +280,9 @@ Specifically, the second points implies that the explanation, say the circuit th
 
 r'''
 <img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Trade_off.png" width="700">
-<!-- Make this rather a pareto frontier? -->
+FILTERS: ~
+Author note: Make this rather a pareto frontier?
+END FILTERS
 '''
 
 # ! CELL TYPE: markdown
@@ -300,10 +309,13 @@ r'''
 Compact proofs are an attempt at formalizing the above diagram.
 
 First of all, what do we mean by proof i.e. what are we trying to prove? Say we are training a model with weights $\theta$ on some task. The kind of statements that we want to prove are of the form
-$$ \mathbb{E}[f_\theta(x)] \geq b$$
-where $f_\theta$ is a quantity that we are interested in bounding from below or above (depending on the quantity), such as loss or accuracy. 
+$$ \mathbb{E}[f_\theta(x)] \leq b$$
+(or $\geq b$) where $f_\theta$ is a quantity that we are interested in bounding from above or below (depending on the quantity), such as loss or accuracy. 
 
-The compactness of a proof is determined by its length. A good proxy for the length is the FLOPS required to run the proof, see the [paper](https://arxiv.org/pdf/2406.11779) for more details . (Maybe I will write more on this)
+The compactness of a proof is determined by its length. A good proxy for the length is the FLOPS required to run the proof, see the [paper](https://arxiv.org/pdf/2406.11779) for more details.
+FILTERS: ~
+Author note: Maybe I will write more on this.
+END FILTERS
 
 So once we have a proof, we can measure its correspondence by looking at the bound and measure its compactness by measuring its length. We get a similar picture to the one drawn above:
 '''
@@ -376,12 +388,12 @@ class MLP(t.nn.Module):
 # ! TAGS: []
 
 r'''
-In our first example, we will train the model to predict the max of the two tokens, where the tokens range from $0$ to $d_{vocab}$. We will be interested in estimating the global loss of this model, that is we want to estimate 
+In our first example, we will train the model to predict the max of the two tokens, where the tokens range from $0$ to $d_{vocab}-1$. We will be interested in estimating the global loss of this model, that is we want to estimate 
 $$ \mathbb{E}[f(t_1,t_2)]= \frac{1}{(d_{vocab})^2}\cdot\sum_{t_1,t_2\in \{0,...,d_{vocab}-1\}} f(t_1,t_2). $$
 
 
 The general proof strategy consists of two steps:
-1. P1: Prove a statement that given a model with its weights $\theta$, there is a quantity $C(\theta)$ such that $ \mathbb{E}[h(x,M(x))]\leq C(\theta) $.
+1. P1: Prove a statement that given a model with its weights $\theta$, there is a quantity $C(\theta)$ such that $ \mathbb{E}[f_\theta(t_1,t_2)]\leq C(\theta) $.
 2. P2: Compute the quantity $C(\theta)$.
 
 We will come back to this after we did some proofs and also discuss what it means to have a **compact** proof.
@@ -391,22 +403,24 @@ We will come back to this after we did some proofs and also discuss what it mean
 # ! FILTERS: []
 # ! TAGS: []
 
-model = MLP(params=Parameters)
+model = MLP(params=params)
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
 # ! TAGS: []
 
 r'''
-We train our model on ~$10\%$ of the whole data set.
-(This is not correct, dataset is random each batch)
+We train our model for 2 epochs on a $5\%$ subset, i.e. it sees about $10\%$ as many examples as there are possible inputs. (The examples are drawn at random each time, so this is not literally $10\%$ of the data set.)
+FILTERS: ~
+Author note: This is not correct, dataset is random each batch.
+END FILTERS
 '''
 
 # ! CELL TYPE: code
 # ! FILTERS: []
 # ! TAGS: []
 
-model = MLP(params=params)
+model = MLP(params=params).to(device)
 loss_history = train(model=model, params=params)
 
 # ! CELL TYPE: code
@@ -469,13 +483,14 @@ Now we come to the second part of the proof (P2), which in this case means compu
 # ! TAGS: []
 
 # EXERCISE
-# def brute_force_loss(model, params: Parameters) -> Float:
+# @measure_time
+# def brute_force_loss_proof(model, params: Parameters) -> Float:
 #     """Computes the loss for every possible input and returns the average of the sum of the losses"""
 
 #     loss = 0
 #     criterion = t.nn.CrossEntropyLoss()
 
-#     # Solution goes here
+#     # Solution goes here (create your tensors on `device`, where the model is)
 
 #     pass
 # END EXERCISE
@@ -490,8 +505,8 @@ def brute_force_loss_proof(model, params):
 
         for x in tqdm(range(0, params.d_vocab)):
 
-            x_tensor = t.tensor([x] * (params.d_vocab))
-            y_tensor = t.tensor([i for i in range(params.d_vocab)])
+            x_tensor = t.full((params.d_vocab,), x, device=device)
+            y_tensor = t.arange(params.d_vocab, device=device)
 
             labels = t.max(x_tensor, y_tensor)
 
@@ -567,7 +582,7 @@ r'''
   <summary>Proof</summary>
   
   This is a consequence of the following equalities 
-  $$f_\theta(t_1,t_2)= g_\theta(t_1.E+t_2.E)= g_\theta(t_2.E+t_1.E)=f_\theta(t_1,t_2).$$
+  $$f_\theta(t_1,t_2)= g_\theta(t_1.E+t_2.E)= g_\theta(t_2.E+t_1.E)=f_\theta(t_2,t_1).$$
   
 </details>
 '''
@@ -609,13 +624,14 @@ Now we can come to the second part P2 of our proof -- actually computing the qua
 # ! TAGS: []
 
 # EXERCISE
+# @measure_time
 # def symmetry_proof_loss(model, params: Parameters) -> Float:
 #     """Computes the loss for the inputs specified above and returns the average of the sum of the losses (weighted correctly)"""
 
 #     loss = 0
 #     criterion = t.nn.CrossEntropyLoss()
 
-#     # Solution goes here
+#     # Solution goes here (create your tensors on `device`, where the model is)
 
 #     pass
 # END EXERCISE
@@ -629,8 +645,8 @@ def symmetry_proof_loss(model, params):
         model.eval()
         for x in tqdm(range(0, params.d_vocab - 1)):
 
-            x_tensor = t.tensor([x] * (params.d_vocab - x - 1))
-            y_tensor = t.tensor([x + i + 1 for i in range(params.d_vocab - x - 1)])
+            x_tensor = t.full((params.d_vocab - x - 1,), x, device=device)
+            y_tensor = t.arange(x + 1, params.d_vocab, device=device)
 
             labels = t.max(x_tensor, y_tensor)
             inputs = t.stack(
@@ -645,12 +661,12 @@ def symmetry_proof_loss(model, params):
 
             loss += criterion(outputs, labels) * 2 * len(x_tensor)
 
-        x_tensor = t.eye(params.d_vocab)
+        x_tensor = t.eye(params.d_vocab, device=device)
         inputs = t.stack([x_tensor] * 2, dim=1)
 
         outputs = model(inputs)
 
-        loss += criterion(outputs, t.tensor([i for i in range(params.d_vocab)])) * len(
+        loss += criterion(outputs, t.arange(params.d_vocab, device=device)) * len(
             x_tensor
         )
 
@@ -771,7 +787,7 @@ r'''
 ### 2. Proving a bound for $f_\theta(t_1,t_2)$
 
 Theorem: The expected loss of a model M with weights $\theta$ is bounded above by 
-$$\frac{1}{d_{vocab}^2} \cdot \big[ \sum_{t_1} L(g_\theta(t_1,t_1),t_1) + \sum_{t_1<t_2} L(g_\theta(t_1,t_1), t_2) + L(g_\theta(t_2,t_2), t_2) \big].$$
+$$\frac{1}{d_{vocab}^2} \cdot \big[ \sum_{t_1} L(g_\theta(2\cdot t_1.E),t_1) + \sum_{t_1<t_2} \big( L(g_\theta(2\cdot t_1.E), t_2) + L(g_\theta(2\cdot t_2.E), t_2) \big) \big].$$
 
 Note that we can rewrite the first and last term as $f_\theta(t_1,t_1)$ and $f_\theta(t_2,t_2)$ respectively, but we can't rewrite the middle term in terms of $f_\theta$ (Why?).
 '''
@@ -806,13 +822,14 @@ Now we come to the part P2 of our proof -- computing the above quantity.
 # ! TAGS: []
 
 # EXERCISE
+# @measure_time
 # def convexity_proof(model, params: Parameters):
 #     """Computes the loss for the diagonal entries and otherwise the convex bound specified above"""
 
 #     loss = 0
 #     criterion = t.nn.CrossEntropyLoss()
 
-#     # Solution goes here
+#     # Solution goes here (create your tensors on `device`, where the model is)
 
 #     pass
 # END EXERCISE
@@ -826,17 +843,18 @@ def convexity_proof(model, params):
 
         criterion = t.nn.CrossEntropyLoss()
 
-        inputs = t.stack([t.eye(params.d_vocab) * 2], dim=1)
+        inputs = t.stack([t.eye(params.d_vocab, device=device) * 2], dim=1)
 
         logits = model(inputs)
-        print(logits.shape)
 
         for i in tqdm(range(1, params.d_vocab)):
 
-            loss += (i + 1) * criterion(logits[: i + 1], t.tensor([i] * (i + 1)))
+            # sum_{t1 < i} L(g(2 t1.E), i)  +  i copies of L(g(2 i.E), i)
+            loss += i * criterion(logits[:i], t.full((i,), i, device=device))
+            loss += i * criterion(logits[i : i + 1], t.full((1,), i, device=device))
 
         loss += params.d_vocab * criterion(
-            logits, t.tensor([i for i in range(params.d_vocab)])
+            logits, t.arange(params.d_vocab, device=device)
         )
 
     return loss / (params.d_vocab**2)
@@ -861,7 +879,7 @@ r'''
 # ! TAGS: []
 
 x = [performance[i][1] for i in range(3)]
-y = [performance[i][0] for i in range(3)]
+y = [float(performance[i][0]) for i in range(3)]
 labels = ["Brute force", "Symmetric", "Convex"]
 colors = ["red", "green", "blue"]
 
@@ -947,7 +965,7 @@ r'''
 
 params_3 = Parameters(n_ctx=3, d_vocab=256)
 train_data_3 = TrainingDataMax(params=params_3)
-model_3 = MLP(params=params_3)
+model_3 = MLP(params=params_3).to(device)
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
@@ -969,7 +987,7 @@ loss_history_3 = train(model=model_3, params=params_3)
 
 plt.plot(loss_history_3)
 plt.title("Loss Curve")
-plt.xlabel("Epochs")
+plt.xlabel("Batch")
 plt.ylabel("Loss")
 plt.grid(True)
 plt.show()
@@ -996,23 +1014,23 @@ def brute_force_loss_proof_3(model, params):
     with t.no_grad():
         model.eval()
 
+        # the first two tokens run over all d_vocab^2 pairs; these don't depend on x
+        x_tensor = t.arange(params.d_vocab, device=device).repeat_interleave(params.d_vocab)
+        y_tensor = t.arange(params.d_vocab, device=device).repeat(params.d_vocab)
+        x_one_hot = F.one_hot(x_tensor, num_classes=params.d_vocab).float()
+        y_one_hot = F.one_hot(y_tensor, num_classes=params.d_vocab).float()
+
         for x in tqdm(range(0, params.d_vocab)):
 
-            x_tensor = t.tensor(
-                [i for i in range(params.d_vocab) for _ in range(params.d_vocab)]
-            )
-
-            y_tensor = t.tensor(list(range(params.d_vocab)) * params.d_vocab)
-
-            z_tensor = t.tensor([x] * params.d_vocab**2)
+            z_tensor = t.full((params.d_vocab**2,), x, device=device)
 
             max_xy = t.max(x_tensor, y_tensor)
             labels = t.max(max_xy, z_tensor)
 
             inputs = t.stack(
                 [
-                    F.one_hot(x_tensor, num_classes=params.d_vocab).float(),
-                    F.one_hot(y_tensor, num_classes=params.d_vocab).float(),
+                    x_one_hot,
+                    y_one_hot,
                     F.one_hot(z_tensor, num_classes=params.d_vocab).float(),
                 ],
                 dim=1,
@@ -1047,7 +1065,7 @@ Now we come to the P1 part of our proof. Again we make use of the convexity.
 
 
 Theorem: The expected loss of a model M with weights $\theta$ is bounded above by 
-$$\frac{1}{d_{vocab}^3} \cdot \big[ \sum_{t_1} f_\theta(t_1,t_1,t_1) + 3\cdot \sum_{t_1<t_2} f_\theta(t_1,t_1,t_2) + 3\cdot \sum_{t_1<t_2} f_\theta(t_1,t_2,t_2) + 3 \cdot \sum_{t_1<t_2 < t_3} f_\theta(t_1,t_1,t_3)+f_\theta(t_2,t_2,t_3) \big].$$
+$$\frac{1}{d_{vocab}^3} \cdot \big[ \sum_{t_1} f_\theta(t_1,t_1,t_1) + 3\cdot \sum_{t_1<t_2} f_\theta(t_1,t_1,t_2) + 3\cdot \sum_{t_1<t_2} f_\theta(t_1,t_2,t_2) + 3 \cdot \sum_{t_1<t_2 < t_3} \big( f_\theta(t_1,t_1,t_3)+f_\theta(t_2,t_2,t_3) \big) \big].$$
 '''
 
 # ! CELL TYPE: markdown
@@ -1085,12 +1103,12 @@ def convexity_proof_three_equal(
 
         # Estimate f(x,x,x)
 
-        x_one_hot = t.eye(params.d_vocab)
+        x_one_hot = t.eye(params.d_vocab, device=device)
 
         inputs = t.stack([x_one_hot] * 3, dim=1)
         outputs = model(inputs)
 
-        loss += criterion(outputs, t.tensor([i for i in range(params.d_vocab)]))
+        loss += criterion(outputs, t.arange(params.d_vocab, device=device))
 
     return loss
 
@@ -1108,9 +1126,9 @@ def convexity_proof_two_equal(model, params: Parameters):
         for z in range(1, params.d_vocab):
 
             # [0,1,...,z-1]
-            x_tensor = t.tensor([i for i in range(z)])
+            x_tensor = t.arange(z, device=device)
             # [z,z,...,z]
-            z_tensor = t.tensor([z] * z)
+            z_tensor = t.full((z,), z, device=device)
 
             inputs = t.stack(
                 [
@@ -1128,9 +1146,9 @@ def convexity_proof_two_equal(model, params: Parameters):
         for z in range(1, params.d_vocab):
 
             # [0,1,...,z-1]
-            x_tensor = t.tensor([i for i in range(z)])
+            x_tensor = t.arange(z, device=device)
             # [z,z,...,z]
-            z_tensor = t.tensor([z] * z)
+            z_tensor = t.full((z,), z, device=device)
 
             inputs = t.stack(
                 [
@@ -1151,7 +1169,7 @@ def convexity_proof_two_equal(model, params: Parameters):
 # ! TAGS: []
 
 @measure_time
-def convexity_proof(model, params: Parameters):
+def convexity_proof_3(model, params: Parameters):
 
     loss = []
     criterion = t.nn.CrossEntropyLoss(reduction="sum")
@@ -1163,12 +1181,12 @@ def convexity_proof(model, params: Parameters):
             count = 0
 
             # [0,1,...,z-1]
-            x_tensor = t.tensor([i for i in range(z)])
+            x_tensor = t.arange(z, device=device)
 
             length = x_tensor.size(dim=0)
 
             # [z,z,...,z]
-            z_tensor = t.tensor([z] * length)
+            z_tensor = t.full((length,), z, device=device)
 
             inputs = t.stack(
                 [
@@ -1198,7 +1216,7 @@ def convexity_proof(model, params: Parameters):
 # ! FILTERS: []
 # ! TAGS: []
 
-convexity_proof(model=model_3, params=params_3)
+convexity_proof_3(model=model_3, params=params_3)
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
