@@ -272,7 +272,7 @@ Specifically, the second points implies that the explanation, say the circuit th
 # ! TAGS: []
 
 r'''
-<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Trade_off.png" width="800" height="400">
+<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Trade_off.png" width="700">
 <!-- Make this rather a pareto frontier? -->
 '''
 
@@ -313,7 +313,7 @@ So once we have a proof, we can measure its correspondence by looking at the bou
 # ! TAGS: []
 
 r'''
-<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Compact_proofs.png" height="700" width="700">
+<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Compact_proofs.png" width="700">
 '''
 
 # ! CELL TYPE: markdown
@@ -347,7 +347,7 @@ Having worked through the high level picture, let us now focus on concrete examp
 # ! TAGS: []
 
 r'''
-<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Model_2.png" height="700" width="700">
+<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Model_2.png" width="700">
 '''
 
 # ! CELL TYPE: code
@@ -941,7 +941,7 @@ We now slightly change our model and proof a new bound about it. This will be ve
 # ! TAGS: []
 
 r'''
-<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Model_3.png" height="700" width="700">
+<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Model_3.png" width="700">
 '''
 
 # ! CELL TYPE: code
