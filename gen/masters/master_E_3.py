@@ -38,6 +38,14 @@ r'''
 # 0. Set up (Just run, don't read)
 '''
 
+# ! CELL TYPE: markdown
+# ! FILTERS: []
+# ! TAGS: []
+
+r'''
+> **Use a GPU runtime.** In Colab, go to *Runtime → Change runtime type* and pick a GPU (e.g. T4). The notebook also runs on a CPU runtime, but the proofs then take a few minutes instead of a few seconds.
+'''
+
 # ! CELL TYPE: code
 # ! FILTERS: [colab]
 # ! TAGS: [master-comment]
@@ -46,7 +54,6 @@ r'''
 
 # %pip install tqdm
 # %pip install torch
-# %pip install einops
 # %pip install matplotlib
 # %pip install jaxtyping
 
@@ -61,15 +68,11 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import os
 import time
-from torch.utils.data import Dataset, DataLoader
 import random, numpy
 from dataclasses import dataclass
 from jaxtyping import Float, Int
 from torch import Tensor
-from typing import Optional, Callable, Union, List, Tuple
-import copy
 from tqdm import tqdm
-from IPython.display import Image
 
 # ! CELL TYPE: code
 # ! FILTERS: []
@@ -82,12 +85,12 @@ class Parameters:
     d_model: int = 128
     num_epoch: int = 2
     batch_size: int = 1024
-    subset_percentage: float = 5
+    subset_percentage: float = 5  # each epoch draws this % of all d_vocab**n_ctx possible inputs
     lr: float = 0.001
 
 
 params = Parameters()
-performance = []
+performance = {}  # proof name -> (loss bound, seconds)
 
 # Run everything on the GPU if there is one (Runtime > Change runtime type > GPU on Colab)
 device = t.device("cuda" if t.cuda.is_available() else "cpu")
@@ -130,25 +133,7 @@ def measure_time(func):
 # ! FILTERS: []
 # ! TAGS: []
 
-class TrainingDataMax(Dataset):
-    def __init__(self, params):
-        set_seed(57)
-        self.n = params.d_vocab
-        self.n_ctx = params.n_ctx
-
-    def __getitem__(self, idx):
-
-        inputs = [random.randint(0, self.n - 1) for i in range(self.n_ctx)]
-        return inputs + [max(inputs)]
-
-    def __len__(self):
-        return self.n**self.n_ctx
-
-# ! CELL TYPE: code
-# ! FILTERS: []
-# ! TAGS: []
-
-train_data = TrainingDataMax(params=params)
+set_seed(57)
 
 # ! CELL TYPE: code
 # ! FILTERS: []
@@ -157,15 +142,12 @@ train_data = TrainingDataMax(params=params)
 def training_step(
     model,
     optimizer,
-    batch: Tuple[
-        Int[Tensor, "batch_size"], Int[Tensor, "batch_size"], Int[Tensor, "batch_size"]
-    ],
+    inputs: Int[Tensor, "batch_size n_ctx"],
+    labels: Int[Tensor, "batch_size"],
     params: Parameters,
 ):
 
     criterion = t.nn.CrossEntropyLoss()
-
-    inputs, labels = t.stack(batch[:-1], dim=1).to(device), batch[-1].to(device)
 
     inputs_one_hot = F.one_hot(inputs, params.d_vocab).float()
 
@@ -187,26 +169,28 @@ def train(model, params):
 
     loss_history = []
 
-    subset_cardinality = int(
-        len(TrainingDataMax(params=params)) * (params.subset_percentage / 100)
-    )
-    remaining_cardinality = len(TrainingDataMax(params=params)) - subset_cardinality
-
-    train_data, _ = t.utils.data.random_split(
-        TrainingDataMax(params=params), [subset_cardinality, remaining_cardinality]
-    )
-
-    dataloader = DataLoader(train_data, batch_size=params.batch_size, shuffle=True)
+    n_samples = int(params.d_vocab**params.n_ctx * (params.subset_percentage / 100))
 
     optimizer = t.optim.AdamW(
         model.parameters(),
         lr=params.lr,
     )
 
+    set_seed(57)
     for epoch in tqdm(range(params.num_epoch)):
-        for i, batch in enumerate(dataloader):
+        # Fresh random inputs every epoch; the label is the max of each row
+        inputs = t.randint(0, params.d_vocab, (n_samples, params.n_ctx), device=device)
+        labels = inputs.max(dim=1).values
+
+        for batch_inputs, batch_labels in zip(
+            inputs.split(params.batch_size), labels.split(params.batch_size)
+        ):
             loss = training_step(
-                model=model, optimizer=optimizer, batch=batch, params=params
+                model=model,
+                optimizer=optimizer,
+                inputs=batch_inputs,
+                labels=batch_labels,
+                params=params,
             )
 
             loss_history.append(loss.detach().item())
@@ -410,10 +394,7 @@ model = MLP(params=params)
 # ! TAGS: []
 
 r'''
-We train our model for 2 epochs on a $5\%$ subset, i.e. it sees about $10\%$ as many examples as there are possible inputs. (The examples are drawn at random each time, so this is not literally $10\%$ of the data set.)
-FILTERS: ~
-Author note: This is not correct, dataset is random each batch.
-END FILTERS
+We train our model for 2 epochs. Each epoch draws fresh random inputs, as many as $5\%$ of all possible inputs, so in total the model sees about $10\%$ as many examples as there are possible inputs. (Since they are drawn at random, this is not literally $10\%$ of the data set.)
 '''
 
 # ! CELL TYPE: code
@@ -535,7 +516,7 @@ loss_bf, time_bf = brute_force_loss_proof(model=model, params=params)
 # ! FILTERS: []
 # ! TAGS: []
 
-performance.append((loss_bf, time_bf))
+performance["Brute force"] = (loss_bf, time_bf)
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
@@ -683,7 +664,7 @@ loss_sym, time_sym = symmetry_proof_loss(model=model, params=params)
 # ! FILTERS: []
 # ! TAGS: []
 
-performance.append((loss_sym, time_sym))
+performance["Symmetric"] = (loss_sym, time_sym)
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
@@ -864,7 +845,7 @@ def convexity_proof(model, params):
 # ! FILTERS: []
 # ! TAGS: []
 
-performance.append(convexity_proof(model=model, params=params))
+performance["Convex"] = convexity_proof(model=model, params=params)
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
@@ -878,24 +859,22 @@ r'''
 # ! FILTERS: []
 # ! TAGS: []
 
-x = [performance[i][1] for i in range(3)]
-y = [float(performance[i][0]) for i in range(3)]
-labels = ["Brute force", "Symmetric", "Convex"]
-colors = ["red", "green", "blue"]
+def plot_performance(performance, title):
+    colors = {"Brute force": "red", "Symmetric": "green", "Convex": "blue"}
+
+    for label, (loss, elapsed_time) in performance.items():
+        if loss is None:  # exercise not implemented yet
+            continue
+        plt.scatter(elapsed_time, float(loss), color=colors[label], label=label)
+
+    plt.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
+    plt.title(title)
+    plt.xlabel("Time needed (in seconds)")
+    plt.ylabel("Loss estimate")
+    plt.show()
 
 
-# Create plot
-plt.scatter(x, y, c=colors)
-
-
-for label, color in zip(labels, colors):
-    plt.plot([], [], marker="o", linestyle="", markersize=8, color=color, label=label)
-
-plt.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
-plt.title("Different proof strategies to upper bound loss")
-plt.xlabel("Time needed (in seconds)")
-plt.ylabel("Loss estimate")
-plt.show()
+plot_performance(performance, "Different proof strategies to upper bound loss")
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
@@ -964,7 +943,8 @@ r'''
 # ! TAGS: []
 
 params_3 = Parameters(n_ctx=3, d_vocab=256)
-train_data_3 = TrainingDataMax(params=params_3)
+performance_3 = {}
+set_seed(57)
 model_3 = MLP(params=params_3).to(device)
 
 # ! CELL TYPE: markdown
@@ -1046,7 +1026,8 @@ def brute_force_loss_proof_3(model, params):
 # ! FILTERS: []
 # ! TAGS: []
 
-brute_force_loss_proof_3(model=model_3, params=params_3)[0]
+performance_3["Brute force"] = brute_force_loss_proof_3(model=model_3, params=params_3)
+performance_3["Brute force"][0]
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
@@ -1216,7 +1197,24 @@ def convexity_proof_3(model, params: Parameters):
 # ! FILTERS: []
 # ! TAGS: []
 
-convexity_proof_3(model=model_3, params=params_3)
+performance_3["Convex"] = convexity_proof_3(model=model_3, params=params_3)
+performance_3["Convex"][0]
+
+# ! CELL TYPE: markdown
+# ! FILTERS: []
+# ! TAGS: []
+
+r'''
+### 2. Summary
+
+As for the max-of-2 model, we compare the bound each proof gives with the time it took.
+'''
+
+# ! CELL TYPE: code
+# ! FILTERS: []
+# ! TAGS: []
+
+plot_performance(performance_3, "Different proof strategies to upper bound loss (max of 3)")
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
