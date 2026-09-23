@@ -53,20 +53,6 @@ r'''
 # clear_output()
 
 # ! CELL TYPE: code
-# ! FILTERS: [colab]
-# ! TAGS: [master-comment]
-
-# # ILIAD Intensive setup. On Colab: fetch this notebook's images (img/*) from the
-# # auto-built `build` branch of iliad-team/iliad-intensive-E.3, so `Image(filename="img/...")` works.
-# import os
-# import sys
-#
-# if "google.colab" in sys.modules:
-#     !git clone --depth 1 -b build --filter=blob:none --sparse https://github.com/iliad-team/iliad-intensive-E.3 /content/iliad
-#     !cd /content/iliad && git sparse-checkout set compact_proofs
-#     os.chdir("/content/iliad/compact_proofs")
-
-# ! CELL TYPE: code
 # ! FILTERS: []
 # ! TAGS: []
 
@@ -281,12 +267,14 @@ Before getting into the details, let's nail down two things that we want to quan
 Specifically, the second points implies that the explanation, say the circuit that we discovered, should be more **compact** and therefore more understandable for us humans: The weights of a model are a perfectly faithful explanation of its behaviour, but this explanation is not helpful for us.
 '''
 
-# ! CELL TYPE: code
+# ! CELL TYPE: markdown
 # ! FILTERS: []
 # ! TAGS: []
 
-Image(filename="img/Trade_off.png", width=800, height=400)
-# Make this rather a pareto frontier?
+r'''
+<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Trade_off.png" width="800" height="400">
+<!-- Make this rather a pareto frontier? -->
+'''
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
@@ -320,11 +308,13 @@ The compactness of a proof is determined by its length. A good proxy for the len
 So once we have a proof, we can measure its correspondence by looking at the bound and measure its compactness by measuring its length. We get a similar picture to the one drawn above:
 '''
 
-# ! CELL TYPE: code
+# ! CELL TYPE: markdown
 # ! FILTERS: []
 # ! TAGS: []
 
-Image("img/Compact_proofs.png", height="700", width="700")
+r'''
+<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Compact_proofs.png" height="700" width="700">
+'''
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
@@ -352,11 +342,13 @@ r'''
 Having worked through the high level picture, let us now focus on concrete examples of compact proofs and explain what it means. Let's say we have a model:
 '''
 
-# ! CELL TYPE: code
+# ! CELL TYPE: markdown
 # ! FILTERS: []
 # ! TAGS: []
 
-Image(filename="img/Model_2.png", height="700", width="700")
+r'''
+<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Model_2.png" height="700" width="700">
+'''
 
 # ! CELL TYPE: code
 # ! FILTERS: []
@@ -944,11 +936,13 @@ r'''
 We now slightly change our model and proof a new bound about it. This will be very similar to the previous section, but with better result.
 '''
 
-# ! CELL TYPE: code
+# ! CELL TYPE: markdown
 # ! FILTERS: []
 # ! TAGS: []
 
-Image("img/Model_3.png", height="700", width="700")
+r'''
+<img src="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Model_3.png" height="700" width="700">
+'''
 
 # ! CELL TYPE: code
 # ! FILTERS: []
