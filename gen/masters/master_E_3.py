@@ -468,20 +468,18 @@ Now we come to the second part of the proof (P2), which in this case means compu
 # ! FILTERS: []
 # ! TAGS: []
 
-def brute_force_loss(model, params: Parameters) -> Float:
-    """Computes the loss for every possible input and returns the average of the sum of the losses"""
+# EXERCISE
+# def brute_force_loss(model, params: Parameters) -> Float:
+#     """Computes the loss for every possible input and returns the average of the sum of the losses"""
 
-    loss = 0
-    criterion = t.nn.CrossEntropyLoss()
+#     loss = 0
+#     criterion = t.nn.CrossEntropyLoss()
 
-    # Solution goes here
+#     # Solution goes here
 
-    pass
-
-# ! CELL TYPE: code
-# ! FILTERS: []
-# ! TAGS: []
-
+#     pass
+# END EXERCISE
+# SOLUTION
 @measure_time
 def brute_force_loss_proof(model, params):
     loss = 0
@@ -510,6 +508,7 @@ def brute_force_loss_proof(model, params):
             loss += criterion(outputs, labels)
 
     return loss / params.d_vocab
+# END SOLUTION
 
 # ! CELL TYPE: code
 # ! FILTERS: []
@@ -609,20 +608,18 @@ Now we can come to the second part P2 of our proof -- actually computing the qua
 # ! FILTERS: []
 # ! TAGS: []
 
-def symmetry_proof_loss(model, params: Parameters) -> Float:
-    """Computes the loss for the inputs specified above and returns the average of the sum of the losses (weighted correctly)"""
+# EXERCISE
+# def symmetry_proof_loss(model, params: Parameters) -> Float:
+#     """Computes the loss for the inputs specified above and returns the average of the sum of the losses (weighted correctly)"""
 
-    loss = 0
-    criterion = t.nn.CrossEntropyLoss()
+#     loss = 0
+#     criterion = t.nn.CrossEntropyLoss()
 
-    # Solution goes here
+#     # Solution goes here
 
-    pass
-
-# ! CELL TYPE: code
-# ! FILTERS: []
-# ! TAGS: []
-
+#     pass
+# END EXERCISE
+# SOLUTION
 @measure_time
 def symmetry_proof_loss(model, params):
     loss = 0
@@ -658,6 +655,7 @@ def symmetry_proof_loss(model, params):
         )
 
     return loss / (params.d_vocab * params.d_vocab)
+# END SOLUTION
 
 # ! CELL TYPE: code
 # ! FILTERS: []
@@ -807,20 +805,18 @@ Now we come to the part P2 of our proof -- computing the above quantity.
 # ! FILTERS: []
 # ! TAGS: []
 
-def convexity_proof(model, params: Parameters):
-    """Computes the loss for the diagonal entries and otherwise the convex bound specified above"""
+# EXERCISE
+# def convexity_proof(model, params: Parameters):
+#     """Computes the loss for the diagonal entries and otherwise the convex bound specified above"""
 
-    loss = 0
-    criterion = t.nn.CrossEntropyLoss()
+#     loss = 0
+#     criterion = t.nn.CrossEntropyLoss()
 
-    # Solution goes here
+#     # Solution goes here
 
-    pass
-
-# ! CELL TYPE: code
-# ! FILTERS: []
-# ! TAGS: []
-
+#     pass
+# END EXERCISE
+# SOLUTION
 @measure_time
 def convexity_proof(model, params):
     loss = 0
@@ -844,6 +840,7 @@ def convexity_proof(model, params):
         )
 
     return loss / (params.d_vocab**2)
+# END SOLUTION
 
 # ! CELL TYPE: code
 # ! FILTERS: []
