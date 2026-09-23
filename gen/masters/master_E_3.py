@@ -227,7 +227,7 @@ r'''
 # ! TAGS: []
 
 r'''
-**Why do we care about about understanding a model?**
+**Why do we care about understanding a model?**
 
 When we use or train a model, many things can go wrong. For example, during training the model can learn undesired behaviour, which is not obvious to us (deceptive alignment). Or it might have failure modes that are not salient to us (adversarial examples). 
 On the other hand, we could steer a model towards a desired behaviour, if we understood how it works.
@@ -255,9 +255,9 @@ See also Section 5 of this review [*Mechanistic Interpretability for AI Safety -
 # ! TAGS: []
 
 r'''
-**Quantative methods for interpretability**
+**Quantitative methods for interpretability**
 
-Having quantative methods would not only make mechanistic interpretability research more rigorous. If we want to scale up methods to huge models, we will need to automate parts of the process and we won't be able to have a human in the loop at every crucial point. A lack of quantative benchmarks makes this task seem almost impossible. To spoiler the punchline: Compact proofs provide such a quantative benchmark, although they currently are infeasible for larger models.
+Having quantitative methods would not only make mechanistic interpretability research more rigorous. If we want to scale up methods to huge models, we will need to automate parts of the process and we won't be able to have a human in the loop at every crucial point. A lack of quantitative benchmarks makes this task seem almost impossible. To spoiler the punchline: Compact proofs provide such a quantitative benchmark, although they currently are infeasible for larger models.
 
 Before getting into the details, let's nail down two things that we want to quantify. The following two points are taken from the [Compact proofs blog post](https://www.alignmentforum.org/posts/bRsKimQcPTX3tNNJZ/compact-proofs-of-model-performance-via-mechanistic#Introduction), see also this [comment](https://www.lesswrong.com/posts/LNA8mubrByG7SFacm/against-almost-every-theory-of-impact-of-interpretability-1?commentId=7fNRMke9Gc4QghYyf) by Ryan Greenblatt.
 
@@ -281,7 +281,7 @@ r'''
 # ! TAGS: []
 
 r'''
-An important insight that we will make is that our explanations are not as good as we might think. Specifically, **noise** in the model's weights seem negligible. But worst case bound imply that it could still be an important contribuiting factor. In fact, it might be that something that we deem as noise, is important for the model's computation, but we simply don't understand it. This issue with the noise is another point that a quantative evaluation should be able to address.
+An important insight that we will make is that our explanations are not as good as we might think. Specifically, **noise** in the model's weights seem negligible. But worst case bound imply that it could still be an important contributing factor. In fact, it might be that something that we deem as noise, is important for the model's computation, but we simply don't understand it. This issue with the noise is another point that a quantitative evaluation should be able to address.
 '''
 
 # ! CELL TYPE: markdown
@@ -299,7 +299,7 @@ r'''
 r'''
 Compact proofs are an attempt at formalizing the above diagram.
 
-First of all, what do we mean by proof i.e. what are we trying to prove? Say we are training a model with weights $\theta$ on some task. The kinda of statements that we want to prove are of the form
+First of all, what do we mean by proof i.e. what are we trying to prove? Say we are training a model with weights $\theta$ on some task. The kind of statements that we want to prove are of the form
 $$ \mathbb{E}[f_\theta(x)] \geq b$$
 where $f_\theta$ is a quantity that we are interested in bounding from below or above (depending on the quantity), such as loss or accuracy. 
 
@@ -750,13 +750,13 @@ r'''
 
 - $g_\theta(v)$ is a composition of linear functions, therefore also linear.
 
-- There are several ways to prove that $L$ is convex. One could verify that the Hessian of $L$ is positive semi-definite or directly apply the Hölderlin inequality. Let's use the latter approach.
+- There are several ways to prove that $L$ is convex. One could verify that the Hessian of $L$ is positive semi-definite or directly apply Hölder's inequality. Let's use the latter approach.
 Our goal is to show that for $x\in \mathbb{R}^m$ we have the following function is convex
 $$  -log(\frac{e^{x_i}}{\sum^m_{j=1}e^{x_j}}) $$
 where we fixed an $i\in \{1,...,m\}$ (corresponding to the correct label).
 We can rewrite the function as
 $$ - x_i + log(\sum^m_{j=1}e^{x_j})$$
-and it suffices to show that $log(\sum^m_{j=1}e^{x_j})$ is convex. This follows from the Hölderlin inequality
+and it suffices to show that $log(\sum^m_{j=1}e^{x_j})$ is convex. This follows from Hölder's inequality
 $$ \sum e^{t\cdot x_i} e^{(1-t)\cdot y_i} \leq (\sum e^{ x_i})^t \cdot (\sum e^{ y_i})^{1-t}.$$
 
 
@@ -930,7 +930,7 @@ r'''
 # ! TAGS: []
 
 r'''
-We now slightly change our model and proof a new bound about it. This will be very similar to the previous section, but with better result.
+We now slightly change our model and prove a new bound about it. This will be very similar to the previous section, but with better result.
 '''
 
 # ! CELL TYPE: markdown
