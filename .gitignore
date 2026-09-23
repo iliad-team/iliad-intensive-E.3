@@ -1,0 +1,11 @@
+# Notebook generator output (CI pushes it to the `build` branch)
+build/
+publish/
+gen/masters/*.ipynb
+__pycache__/
+*.pyc
+
+# Editor / OS noise
+*.swp
+*~
+.DS_Store

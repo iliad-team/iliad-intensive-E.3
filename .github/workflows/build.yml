@@ -1,0 +1,56 @@
+name: build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+# Force-pushes the generated tree to the `build` branch.
+permissions:
+  contents: write
+
+concurrency:
+  group: build-branch
+  cancel-in-progress: false
+
+# Generates the compact-proofs Colab notebooks from gen/masters/master_E_3.py and
+# publishes them, with their images, to the orphan `build` branch as compact_proofs/.
+# Colab opens them from there. PRs build but do not publish; nothing generated is
+# ever committed to master. The worksheet page lives in the website repo
+# (iliad-team/iliad-intensive, tex/worst-case-interp/).
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate the notebooks
+        run: |
+          pip install -r gen/requirements-gen.txt
+          python gen/core/main.py --chapters='E.3' --use_py=true
+
+      - name: Assemble publish tree
+        run: |
+          set -euo pipefail
+          mkdir -p publish/compact_proofs
+          cp -r gen/support/compact_proofs/. publish/compact_proofs/
+          cp build/exercises/compact_proofs/*.ipynb build/exercises/compact_proofs/solutions.py publish/compact_proofs/
+          for nb in publish/compact_proofs/*.ipynb; do
+            python -c "import json; json.load(open('$nb'))"
+            if grep -q "callummcdougall/ARENA_3.0" "$nb"; then echo "::error::ARENA clone URL leaked into $nb"; exit 1; fi
+          done
+          find publish -type f | sort
+
+      - name: Push to the `build` branch (master only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./publish
+          publish_branch: build
+          force_orphan: true
+          commit_message: "build @ ${{ github.sha }}"
