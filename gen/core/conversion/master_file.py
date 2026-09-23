@@ -666,7 +666,7 @@ class MasterFileData:
             f"> **Colab: [exercises]({exercises_link}) | [solutions]({solutions_link})**",
             "",
             "Part of the [ILIAD Intensive](https://iliad-intensive.org/safety/worst-case-interp/) course material. "
-            "Run the setup cells first; they install dependencies and fetch the images.",
+            "Run the setup cell first; it installs the dependencies.",
         ]
         streamlit_lines = list(colab_lines)
         return streamlit_lines, colab_lines

@@ -53,20 +53,6 @@ r'''
 # clear_output()
 
 # ! CELL TYPE: code
-# ! FILTERS: [colab]
-# ! TAGS: [master-comment]
-
-# # ILIAD Intensive setup. On Colab: fetch this notebook's images (img/*) from the
-# # auto-built `build` branch of iliad-team/iliad-intensive-E.3, so `Image(filename="img/...")` works.
-# import os
-# import sys
-#
-# if "google.colab" in sys.modules:
-#     !git clone --depth 1 -b build --filter=blob:none --sparse https://github.com/iliad-team/iliad-intensive-E.3 /content/iliad
-#     !cd /content/iliad && git sparse-checkout set compact_proofs
-#     os.chdir("/content/iliad/compact_proofs")
-
-# ! CELL TYPE: code
 # ! FILTERS: []
 # ! TAGS: []
 
@@ -285,7 +271,7 @@ Specifically, the second points implies that the explanation, say the circuit th
 # ! FILTERS: []
 # ! TAGS: []
 
-Image(filename="img/Trade_off.png", width=800, height=400)
+Image(url="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Trade_off.png", width=800, height=400)
 # Make this rather a pareto frontier?
 
 # ! CELL TYPE: markdown
@@ -324,7 +310,7 @@ So once we have a proof, we can measure its correspondence by looking at the bou
 # ! FILTERS: []
 # ! TAGS: []
 
-Image("img/Compact_proofs.png", height="700", width="700")
+Image(url="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Compact_proofs.png", height="700", width="700")
 
 # ! CELL TYPE: markdown
 # ! FILTERS: []
@@ -356,7 +342,7 @@ Having worked through the high level picture, let us now focus on concrete examp
 # ! FILTERS: []
 # ! TAGS: []
 
-Image(filename="img/Model_2.png", height="700", width="700")
+Image(url="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Model_2.png", height="700", width="700")
 
 # ! CELL TYPE: code
 # ! FILTERS: []
@@ -948,7 +934,7 @@ We now slightly change our model and proof a new bound about it. This will be ve
 # ! FILTERS: []
 # ! TAGS: []
 
-Image("img/Model_3.png", height="700", width="700")
+Image(url="https://raw.githubusercontent.com/iliad-team/iliad-intensive-E.3/refs/heads/master/gen/support/compact_proofs/img/Model_3.png", height="700", width="700")
 
 # ! CELL TYPE: code
 # ! FILTERS: []
